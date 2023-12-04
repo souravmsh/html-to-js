@@ -1,0 +1,27 @@
+{
+    "name": "souravmsh/html-to-js",
+    "description": "A library for converting HTML to Javascript",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Md. Shohrab Hossain",
+            "email": "sourav.diubd@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": { 
+    },
+    "autoload": {
+        "psr-4": {
+            "Souravmsh\\HtmlToJs\\": "src/"
+        }
+    },
+    "extra": {
+      "laravel": {
+          "providers": [
+              "Souravmsh\\HtmlToJs\\PackageServiceProvider"
+          ]
+      }
+  }
+}
