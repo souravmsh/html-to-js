@@ -6,68 +6,91 @@ use DOMDocument;
 
 class ConvertHTMLtoJs
 {
+
     public static function convert($html)
     {
-        if (empty($html)) {
-            return self::response();
+        return self::response(self::process($html));
+    }
+
+    private static function process($html)
+    {
+        if(is_string($html)) {
+            $type = "string";
+        } else {
+            $type = get_class($html);
         }
 
-        $type = is_string($html) ? "string" : get_class($html);
+        $result = [
+            "code" => "",
+            "id"   => ""
+        ];
 
-        switch ($type) {
+        switch($type){
             case "DOMDocument":
             case "DOMElement":
-                $id = $html->nodeName . "_" . md5(uniqid()) . "_element";
-                $code = ($html->nodeName != "#document") ? "var $id = document.createElement('{$html->nodeName}');\n" : "";
-
-                if (!!$html->attributes) {
-                    foreach ($html->attributes as $attr) {
-                        $code .= "$id.setAttribute('{$attr->name}', '{$attr->value}');\n";
+                $id = $html->nodeName."_".md5(uniqid())."_element";
+                if($html->nodeName != "#document"){
+                    $code = "var ".$id." = document.createElement('".$html->nodeName."');\n";
+                }
+                else{
+                    $code = "";
+                }
+                if(!!$html->attributes){ 
+                    foreach($html->attributes as $attr){
+                        $code .= $id.".setAttribute('".$attr->name."', '".$attr->value."');\n";
                     }
                 }
-
-                if (!!$html->childNodes) {
-                    foreach ($html->childNodes as $child) {
-                        $code .= ($child->nodeType == XML_TEXT_NODE)
-                            ? "$id.appendChild(document.createTextNode('" . htmlentities($child->nodeValue) . "'));\n"
-                            : self::convertChild($child, $id);
+                if(!!$html->childNodes){
+                    foreach($html->childNodes as $child){
+                        if($child->nodeType == XML_TEXT_NODE){
+                            $code .= $id.".appendChild(document.createTextNode('".htmlentities($child->nodeValue)."'));\n";
+                        }
+                        else{
+                            $element = self::process($child);
+                            $code .= $element["code"];
+                            if($html->nodeName != "#document"){
+                                $code .= $id.".appendChild(".$element["id"].");\n";
+                            }
+                            else{
+                                $id = $element["id"];
+                            }
+                        }
                     }
                 }
-
-                return self::response($code, $id);
-
+                $result = [
+                    "code" => $code,
+                    "id"   => $id
+                ];
+                break;
             case "DOMDocumentType":
-                return self::response();
-
+                break;
             default:
             case "string":
                 $dom = new DOMDocument();
-                $dom->strictErrorChecking = false;
+                $dom->strictErrorChecking = FALSE;
                 $dom->loadHTML($html);
-                $result = self::convert($dom);
-                return self::response($result->data, $result->id);
-        }
+                $result = self::process($dom);
+                break;
+        } 
+
+        return $result;
     }
 
-    private static function convertChild($child, $parentId)
+    private static function response($result): object
     {
-        $element = self::convert($child);
-        $code = $element->data;
-
-        if ($parentId != "") {
-            $code .= "$parentId.appendChild($element->id);\n";
+        $data = [];
+        if (is_array($result)) {
+            $data = [
+                "code" => !empty($result["code"]) ? $result["code"] : $result,
+                "id"   => !empty($result["id"]) ? $result["id"] : null,
+            ];
         } else {
-            $parentId = $element->id;
+            $data = [
+                "id"   => null, 
+                "code" => $result
+            ];
         }
 
-        return $code;
-    }
-
-    private static function response($data = "", $id = ""): object
-    {
-        return (object)[
-            "id"   => $id,
-            "data" => $data,
-        ];
+        return (object)$data;
     }
 }
