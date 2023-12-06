@@ -39,22 +39,22 @@ composer install
 ```
 5. To use
 
-
-
+PHP
 ```php
+$js = HtmlToJs::convert("<html><head><title>teste</title></head><body style='background:red;'>ola <span id='testando'>teste</span> do mundo</body></html>"); 
+```
 
-$js = HtmlToJs::convert("<html><head><title>teste</title></head><body style='background:red;'>ola <span id='testando'>teste</span> do mundo</body></html>");
-
-{{ $js->id }}
-{{ $js->data }}
-
-// to show in a div 
-$script = "document.body.appendChild(".$js->id.")";
+HTML
+```html
+<textarea>
+    {{ $script->code }}
+    document.body.appendChild({{ $script->id }});
+</textarea>
 ```
 
 JS
 ```js
 <script type="text/javascript">
-{{ $script }}
+// paste text from textarea
 </script>
 ```
